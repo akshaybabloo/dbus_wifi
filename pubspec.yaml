@@ -1,0 +1,16 @@
+name: dbus_wifi
+description: |
+  A simple library to connect to Wi-Fi networks using D-Bus on Linux.
+  This library is intended for use with the dbus package in Dart and Flutter.
+version: 0.0.1
+repository: https://github.com/akshaybabloo/dbus_wifi
+
+environment:
+  sdk: ^3.7.2
+
+dependencies:
+  dbus: ^0.7.11
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.24.0

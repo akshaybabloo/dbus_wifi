@@ -1,0 +1,44 @@
+<?xml version="1.0"?>
+<!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN" "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
+<node name="/org/freedesktop/NetworkManager">
+
+    <interface name="org.freedesktop.NetworkManager">
+        <property name="AllDevices" type="ao" access="read" />
+        <property name="WirelessEnabled" type="b" access="readwrite" />
+        <method name="GetAllDevices">
+            <arg name="devices" type="ao" direction="out" />
+        </method>
+        <method name="AddAndActivateConnection">
+            <arg name="connection" type="a{sa{sv}}" direction="in" />
+            <arg name="device" type="o" direction="in" />
+            <arg name="specificObject" type="o" direction="in" />
+            <arg name="path" type="o" direction="out" />
+            <arg name="activeConnection" type="o" direction="out" />
+        </method>
+    </interface>
+
+    <interface name="org.freedesktop.NetworkManager.Device">
+        <property name="DeviceType" type="u" access="read" />
+    </interface>
+
+    <interface name="org.freedesktop.NetworkManager.Device.Wireless">
+        <property name="AccessPoints" type="ao" access="read" />
+        <property name="ActiveAccessPoint" type="o" access="read" />
+        <property name="Mode" type="u" access="read" />
+        <method name="GetAllAccessPoints">
+            <arg name="accessPoints" type="ao" direction="out" />
+        </method>
+        <method name="RequestScan">
+            <arg name="options" type="a{sv}" direction="in" />
+        </method>
+    </interface>
+
+    <interface name="org.freedesktop.NetworkManager.AccessPoint">
+        <property name="Ssid" type="ay" access="read" />
+        <property name="HwAddress" type="s" access="read" />
+        <property name="Strength" type="y" access="read" />
+        <property name="WpaFlags" type="u" access="read" />
+        <property name="LastSeen" type="i" access="read" />
+    </interface>
+
+</node>
