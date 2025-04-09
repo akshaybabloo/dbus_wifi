@@ -37,7 +37,7 @@ void main() async {
     }
 
     console.writeLine('Connecting to ${selectedNetwork.ssid}...');
-    wifi.connect(selectedNetwork, password!);
+    await wifi.connect(selectedNetwork, password!);
 
     // Here you would add the code to connect to the selected network
   } else {

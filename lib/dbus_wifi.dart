@@ -67,24 +67,36 @@ class DbusWifi {
   }
 
   /// Connects to a Wi-Fi network
-  Future<void> connect(WifiNetwork network, String password) async {
+  Future<List<DBusValue>> connect(WifiNetwork network, String password) async {
     if (!await hasWifiDevice) {
       throw Exception('No Wi-Fi device found.');
     }
 
-    final dev = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager', path: _wifiDevice!.path);
+    final manager = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager');
+
     final connection = {
+      'connection': {
+        'id': DBusString(network.ssid),
+        'type': DBusString('802-11-wireless'),
+      },
       '802-11-wireless': {
         'mode': DBusString('infrastructure'),
         'ssid': DBusArray.byte(utf8.encode(network.ssid)),
+        'security': DBusString('802-11-wireless-security'),
       },
       '802-11-wireless-security': {
-        'key-mgmt': DBusString('wpa-psk'),
+        'key-mgmt': DBusString(network.security),
         'psk': DBusString(password),
+      },
+      'ipv4': {
+        'method': DBusString('auto'),
+      },
+      'ipv6': {
+        'method': DBusString('ignore'),
       },
     };
 
-    await dev.callAddAndActivateConnection(connection, _wifiDevice!.path, _wifiDevice!.path);
+    return await manager.callAddAndActivateConnection(connection, _wifiDevice!.path, DBusObjectPath('/'));
   }
 
   /// Closes the D-Bus client connection
