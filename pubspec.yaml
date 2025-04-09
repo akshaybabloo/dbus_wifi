@@ -20,4 +20,4 @@ dev_dependencies:
   test: ^1.24.0
 
 executables: 
-  wifi-dbus: wifi_dbus
+  dbus-wifi: dbus_wifi

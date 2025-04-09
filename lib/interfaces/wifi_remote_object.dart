@@ -89,9 +89,21 @@ class OrgFreedesktopNetworkManager extends DBusRemoteObject {
     return value.asByte();
   }
 
+  /// Gets org.freedesktop.NetworkManager.AccessPoint.Flags
+  Future<int> getFlags() async {
+    var value = await getProperty('org.freedesktop.NetworkManager.AccessPoint', 'Flags', signature: DBusSignature('u'));
+    return value.asUint32();
+  }
+
   /// Gets org.freedesktop.NetworkManager.AccessPoint.WpaFlags
   Future<int> getWpaFlags() async {
     var value = await getProperty('org.freedesktop.NetworkManager.AccessPoint', 'WpaFlags', signature: DBusSignature('u'));
+    return value.asUint32();
+  }
+
+  /// Gets org.freedesktop.NetworkManager.AccessPoint.RsnFlags
+  Future<int> getRsnFlags() async {
+    var value = await getProperty('org.freedesktop.NetworkManager.AccessPoint', 'RsnFlags', signature: DBusSignature('u'));
     return value.asUint32();
   }
 
@@ -99,5 +111,11 @@ class OrgFreedesktopNetworkManager extends DBusRemoteObject {
   Future<int> getLastSeen() async {
     var value = await getProperty('org.freedesktop.NetworkManager.AccessPoint', 'LastSeen', signature: DBusSignature('i'));
     return value.asInt32();
+  }
+
+  /// Gets org.freedesktop.NetworkManager.AccessPoint.Mode
+  Future<int> getMode_() async {
+    var value = await getProperty('org.freedesktop.NetworkManager.AccessPoint', 'Mode', signature: DBusSignature('u'));
+    return value.asUint32();
   }
 }
