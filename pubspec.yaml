@@ -10,7 +10,6 @@ environment:
 
 platforms:
   linux:
-  windows:
 
 dependencies:
   dbus: ^0.7.11
