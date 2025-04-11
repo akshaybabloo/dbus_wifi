@@ -10,10 +10,13 @@ A complete example can be found in [dbus_wifi.dart](https://github.com/akshaybab
 void main() async {
   final wifi = DbusWifi();
 
-  # Search for Wi-Fi devices
+  // Search for Wi-Fi devices
   final results = await wifi.search(timeout: Duration(seconds: 7));
   
-  # Choose a Wi-Fi from above result, for example, let's take the first one
+  // Choose a Wi-Fi from above result, for example, let's take the first one
   await wifi.connect(results.first, password!);
+
+  // Close the connection
+  await wifi.close();
 }
 ```
