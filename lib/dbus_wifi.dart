@@ -4,6 +4,21 @@ import 'package:dbus/dbus.dart';
 import 'package:dbus_wifi/interfaces/wifi_remote_object.dart';
 import 'package:dbus_wifi/models/wifi_network.dart';
 
+/// Connection status for a Wi-Fi network
+enum ConnectionStatus {
+  /// Not connected to any network
+  disconnected,
+
+  /// Connected to a network
+  connected,
+
+  /// In the process of connecting
+  connecting,
+
+  /// Connection failed
+  failed
+}
+
 /// A class to interact with Wi-Fi networks using D-Bus
 class DbusWifi {
   final DBusClient _client;
@@ -67,6 +82,12 @@ class DbusWifi {
   }
 
   /// Connects to a Wi-Fi network
+  ///
+  /// Returns a list of DBusValues containing the connection path and active connection path.
+  /// Throws an exception if:
+  /// - No Wi-Fi device is found
+  /// - The connection fails (authentication error, network unavailable, etc.)
+  /// - There's an issue with the D-Bus communication
   Future<List<DBusValue>> connect(WifiNetwork network, String password) async {
     if (!await hasWifiDevice) {
       throw Exception('No Wi-Fi device found.');
@@ -96,7 +117,107 @@ class DbusWifi {
       },
     };
 
-    return await manager.callAddAndActivateConnection(connection, _wifiDevice!.path, DBusObjectPath('/'));
+    try {
+      return await manager.callAddAndActivateConnection(connection, _wifiDevice!.path, DBusObjectPath('/'));
+    } catch (e) {
+      if (e.toString().contains('Auth')) {
+        throw Exception('Authentication failed. Check your password and try again.');
+      } else if (e.toString().contains('No network')) {
+        throw Exception('Network unavailable. The selected network may be out of range.');
+      } else {
+        throw Exception('Failed to connect to network: $e');
+      }
+    }
+  }
+
+  /// Disconnects from the current Wi-Fi network
+  ///
+  /// Returns true if successfully disconnected, false otherwise.
+  /// Throws an exception if no Wi-Fi device is found.
+  Future<bool> disconnect() async {
+    if (!await hasWifiDevice) {
+      throw Exception('No Wi-Fi device found.');
+    }
+
+    try {
+      // Set wireless to disabled and then enabled again to disconnect
+      final nm = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager');
+
+      // Disable wireless
+      await nm.setWirelessEnabled(false);
+      await Future.delayed(Duration(seconds: 1));
+
+      // Enable wireless again
+      await nm.setWirelessEnabled(true);
+
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Gets the current connection status
+  ///
+  /// Returns a [ConnectionStatus] enum value indicating the current status.
+  /// Also returns the currently connected network if connected.
+  /// Throws an exception if no Wi-Fi device is found.
+  Future<Map<String, dynamic>> getConnectionStatus() async {
+    if (!await hasWifiDevice) {
+      throw Exception('No Wi-Fi device found.');
+    }
+
+    try {
+      final dev = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager', path: _wifiDevice!.path);
+
+      // Get the active access point
+      final activeAccessPoint = await dev.getActiveAccessPoint();
+
+      // If there's no active access point or it's the root path, we're disconnected
+      if (activeAccessPoint.value == '/') {
+        return {
+          'status': ConnectionStatus.disconnected,
+          'network': null,
+        };
+      }
+
+      // Get the access point details
+      final ap = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager', path: activeAccessPoint);
+
+      try {
+        final ssidBytes = await ap.getSsid();
+        final ssid = String.fromCharCodes(ssidBytes);
+        final mac = await ap.getHwAddress();
+        final strength = await ap.getStrength();
+        final security = await _determineSecurityType(ap);
+        final mode = await _determineWifiMode(dev);
+
+        final network = WifiNetwork(
+          ssid: ssid,
+          mac: mac,
+          strength: strength,
+          path: activeAccessPoint,
+          security: security,
+          mode: mode,
+        );
+
+        return {
+          'status': ConnectionStatus.connected,
+          'network': network,
+        };
+      } catch (e) {
+        return {
+          'status': ConnectionStatus.connected,
+          'network': null,
+          'error': 'Failed to read access point details: $e',
+        };
+      }
+    } catch (e) {
+      return {
+        'status': ConnectionStatus.failed,
+        'network': null,
+        'error': 'Failed to get connection status: $e',
+      };
+    }
   }
 
   /// Closes the D-Bus client connection

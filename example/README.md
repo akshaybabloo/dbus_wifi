@@ -1,75 +1,65 @@
-# Example
+# Examples
 
-Below is an elaborated example, which is a copy of the bin file.
+## Basic Usage
 
 ```dart
-import 'package:dart_console/dart_console.dart';
-import 'package:dbus_wifi/dbus_wifi.dart';
-import 'package:dbus_wifi/models/wifi_network.dart';
-
 void main() async {
   final wifi = DbusWifi();
 
+  // Check if Wi-Fi device is available
   if (await wifi.hasWifiDevice) {
-    print('Wi-Fi device found. Scanning for networks...');
+    // Search for Wi-Fi networks
     final results = await wifi.search(timeout: Duration(seconds: 7));
-    print('Found ${results.length} networks:\n');
-    printToTable(results);
-
-    // Select the ID from the table to connect
-    final console = Console();
-    console.writeLine('Select the ID of the network to connect:');
-    var input = console.readLine();
-    while (input != null && input.isEmpty) {
-      console.writeLine('Please enter a valid ID:');
-      input = console.readLine();
+    print('Found ${results.length} networks');
+    
+    // Connect to a network (e.g., the first one in the list)
+    if (results.isNotEmpty) {
+      try {
+        await wifi.connect(results.first, 'your_password_here');
+        print('Connected to ${results.first.ssid}');
+      } catch (e) {
+        print('Failed to connect: $e');
+      }
     }
-
-    var selectedId = int.tryParse(input!);
-    while (selectedId == null || selectedId <= 0 || selectedId > results.length) {
-      console.writeLine('Invalid selection. Please enter a valid ID:');
-      input = console.readLine();
-      selectedId = int.tryParse(input!);
+    
+    // Check connection status
+    final status = await wifi.getConnectionStatus();
+    if (status['status'] == ConnectionStatus.connected) {
+      final network = status['network'];
+      if (network != null) {
+        print('Connected to: ${network.ssid}');
+      }
     }
-
-    final selectedNetwork = results[selectedId - 1];
-
-    console.writeLine('Enter the password for ${selectedNetwork.ssid}:');
-    String? password = console.readLine();
-    while (password != null && password.isEmpty) {
-      console.writeLine('Password cannot be empty. Please enter the password:');
-      password = console.readLine();
-    }
-
-    console.writeLine('Connecting to ${selectedNetwork.ssid}...');
-    await wifi.connect(selectedNetwork, password!);
-
-    // Here you would add the code to connect to the selected network
-  } else {
-    print('No Wi-Fi device found.');
+    
+    // Disconnect from network
+    final disconnected = await wifi.disconnect();
+    print('Disconnected: $disconnected');
   }
 
+  // Always close the connection when done
   await wifi.close();
 }
-
-/// Prints the list of Wi-Fi networks in a table format
-void printToTable(List<WifiNetwork> networks) {
-  var data = <List<String>>[];
-  for (var i = 0; i < networks.length; i++) {
-    final network = networks[i];
-    data.add([
-      (i + 1).toString(),
-      network.ssid,
-    ]);
-  }
-  final table = Table()
-    ..insertColumn(header: 'Select', alignment: TextAlignment.center)
-    ..insertColumn(header: 'SSID', alignment: TextAlignment.left)
-    ..insertRows(data)
-    ..borderStyle = BorderStyle.square
-    ..borderColor = ConsoleColor.brightBlue
-    ..borderType = BorderType.vertical
-    ..headerStyle = FontStyle.bold;
-  print(table);
-}
 ```
+
+## Interactive CLI Example
+
+The package includes a full-featured CLI application that demonstrates all the functionality. You can run it with:
+
+```bash
+dart run bin/dbus_wifi.dart
+```
+
+Or install it globally:
+
+```bash
+dart pub global activate dbus_wifi
+dbus-wifi
+```
+
+The CLI application provides a menu-driven interface to:
+- Scan for networks
+- Connect to a selected network
+- Check connection status
+- Disconnect from the current network
+
+See the [bin/dbus_wifi.dart](https://github.com/akshaybabloo/dbus_wifi/blob/main/bin/dbus_wifi.dart) file for the complete implementation.
