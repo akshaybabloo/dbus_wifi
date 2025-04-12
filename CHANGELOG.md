@@ -1,3 +1,12 @@
+## 0.0.4
+
+- Add disconnect method to disconnect from Wi-Fi networks
+- Add getConnectionStatus method to check current connection status
+- Improve error handling in connect method
+- Add ConnectionStatus enum for better status representation
+- Enhance CLI with menu-driven interface and additional functionality
+- Expand documentation with more examples and API details
+
 ## 0.0.3
 
 - Update README and example
