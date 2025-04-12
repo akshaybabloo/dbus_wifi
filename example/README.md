@@ -31,6 +31,20 @@ void main() async {
       }
     }
     
+    // View saved networks
+    final savedNetworks = await wifi.getSavedNetworks();
+    print('Saved networks:');
+    for (final network in savedNetworks) {
+      print('- ${network['id']} (${network['uuid']})');
+    }
+    
+    // Forget a network (by SSID)
+    if (savedNetworks.isNotEmpty) {
+      final networkToForget = savedNetworks.first;
+      final forgotten = await wifi.forgetNetwork(ssid: networkToForget['id'] as String);
+      print('Network forgotten: $forgotten');
+    }
+    
     // Disconnect from network
     final disconnected = await wifi.disconnect();
     print('Disconnected: $disconnected');
@@ -61,5 +75,7 @@ The CLI application provides a menu-driven interface to:
 - Connect to a selected network
 - Check connection status
 - Disconnect from the current network
+- View saved networks
+- Forget (delete) saved networks
 
 See the [bin/dbus_wifi.dart](https://github.com/akshaybabloo/dbus_wifi/blob/main/bin/dbus_wifi.dart) file for the complete implementation.

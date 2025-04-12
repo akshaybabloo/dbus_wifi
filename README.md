@@ -8,7 +8,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  dbus_wifi: ^0.0.3
+  dbus_wifi: ^0.0.5
 ```
 
 Then run:
@@ -23,6 +23,8 @@ dart pub get
 - Connect to Wi-Fi networks with password authentication
 - Check current connection status
 - Disconnect from networks
+- View saved networks
+- Forget (delete) saved networks
 - Command-line interface for interactive usage
 
 ## Usage
@@ -81,6 +83,31 @@ if (disconnected) {
 }
 ```
 
+### Viewing Saved Networks
+
+```dart
+final savedNetworks = await wifi.getSavedNetworks();
+for (final network in savedNetworks) {
+  print('Network: ${network['id']}, UUID: ${network['uuid']}');
+}
+```
+
+### Forgetting a Network
+
+```dart
+// Forget by UUID
+final forgotten = await wifi.forgetNetwork(uuid: 'network-uuid-here');
+
+// Or forget by SSID
+final forgotten = await wifi.forgetNetwork(ssid: 'network-name-here');
+
+if (forgotten) {
+  print('Network has been forgotten');
+} else {
+  print('Failed to forget network');
+}
+```
+
 ## Command-Line Interface
 
 The package includes a CLI application that can be used to manage Wi-Fi networks. You can run it with:
@@ -109,6 +136,8 @@ The main class for interacting with Wi-Fi networks.
 - `Future<List<DBusValue>> connect(WifiNetwork network, String password)` - Connects to a Wi-Fi network
 - `Future<bool> disconnect()` - Disconnects from the current Wi-Fi network
 - `Future<Map<String, dynamic>> getConnectionStatus()` - Gets the current connection status
+- `Future<List<Map<String, dynamic>>> getSavedNetworks()` - Gets a list of saved Wi-Fi networks
+- `Future<bool> forgetNetwork({String? uuid, String? ssid})` - Forgets (deletes) a saved Wi-Fi network
 - `Future<void> close()` - Closes the D-Bus client connection
 
 ### WifiNetwork

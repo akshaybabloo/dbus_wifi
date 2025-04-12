@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:dbus/dbus.dart';
+import 'package:dbus_wifi/interfaces/nm_settings_remote_object.dart';
 import 'package:dbus_wifi/interfaces/wifi_remote_object.dart';
 import 'package:dbus_wifi/models/wifi_network.dart';
 
@@ -151,6 +152,104 @@ class DbusWifi {
       await nm.setWirelessEnabled(true);
 
       return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  /// Gets a list of saved Wi-Fi networks
+  ///
+  /// Returns a list of maps containing the network details.
+  /// Each map contains the following keys:
+  /// - id: The connection ID (usually the SSID)
+  /// - uuid: The connection UUID
+  /// - path: The D-Bus object path
+  /// - type: The connection type (usually '802-11-wireless')
+  Future<List<Map<String, dynamic>>> getSavedNetworks() async {
+    final settings = OrgFreedesktopNetworkManagerSettings(_client, 'org.freedesktop.NetworkManager');
+    final connections = await settings.callListConnections();
+
+    final List<Map<String, dynamic>> savedNetworks = [];
+
+    for (final connectionPath in connections) {
+      final connection =
+          OrgFreedesktopNetworkManagerSettings(_client, 'org.freedesktop.NetworkManager', path: connectionPath);
+
+      try {
+        final settings = await connection.callGetSettings();
+
+        // Check if this is a Wi-Fi connection
+        if (settings.containsKey('802-11-wireless')) {
+          final connectionSettings = settings['connection']!;
+          final id = connectionSettings['id']?.asString() ?? 'Unknown';
+          final uuid = connectionSettings['uuid']?.asString() ?? '';
+          final type = connectionSettings['type']?.asString() ?? '';
+
+          savedNetworks.add({
+            'id': id,
+            'uuid': uuid,
+            'path': connectionPath,
+            'type': type,
+          });
+        }
+      } catch (e) {
+        // Skip connections that can't be read
+        continue;
+      }
+    }
+
+    return savedNetworks;
+  }
+
+  /// Forgets (deletes) a saved Wi-Fi network
+  ///
+  /// Takes either a connection UUID or a network SSID.
+  /// If both are provided, UUID takes precedence.
+  /// Returns true if the network was successfully forgotten, false otherwise.
+  Future<bool> forgetNetwork({String? uuid, String? ssid}) async {
+    if (uuid == null && ssid == null) {
+      throw Exception('Either uuid or ssid must be provided.');
+    }
+
+    final settings = OrgFreedesktopNetworkManagerSettings(_client, 'org.freedesktop.NetworkManager');
+
+    try {
+      if (uuid != null) {
+        // Get connection by UUID
+        final connectionPath = await settings.callGetConnectionByUuid(uuid);
+        final connection =
+            OrgFreedesktopNetworkManagerSettings(_client, 'org.freedesktop.NetworkManager', path: connectionPath);
+        await connection.callDelete();
+        return true;
+      } else {
+        // Find connection by SSID
+        final connections = await settings.callListConnections();
+
+        for (final connectionPath in connections) {
+          final connection =
+              OrgFreedesktopNetworkManagerSettings(_client, 'org.freedesktop.NetworkManager', path: connectionPath);
+
+          try {
+            final settings = await connection.callGetSettings();
+
+            // Check if this is a Wi-Fi connection with the matching SSID
+            if (settings.containsKey('802-11-wireless')) {
+              final connectionSettings = settings['connection']!;
+              final id = connectionSettings['id']?.asString() ?? '';
+
+              if (id == ssid) {
+                await connection.callDelete();
+                return true;
+              }
+            }
+          } catch (e) {
+            // Skip connections that can't be read
+            continue;
+          }
+        }
+
+        return false; // No matching connection found
+      }
     } catch (e) {
       return false;
     }

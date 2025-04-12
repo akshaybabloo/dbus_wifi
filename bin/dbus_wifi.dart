@@ -13,14 +13,16 @@ void main() async {
     console.writeLine('1. Scan for networks');
     console.writeLine('2. Check connection status');
     console.writeLine('3. Disconnect from network');
-    console.writeLine('4. Exit');
+    console.writeLine('4. View saved networks');
+    console.writeLine('5. Forget network');
+    console.writeLine('6. Exit');
     console.writeLine('');
     console.writeLine('Select an option:');
 
     var input = console.readLine();
     var option = int.tryParse(input ?? '');
 
-    while (option != 4) {
+    while (option != 6) {
       switch (option) {
         case 1:
           await scanAndConnect(wifi, console);
@@ -30,6 +32,12 @@ void main() async {
           break;
         case 3:
           await disconnect(wifi, console);
+          break;
+        case 4:
+          await viewSavedNetworks(wifi, console);
+          break;
+        case 5:
+          await forgetNetwork(wifi, console);
           break;
         default:
           console.writeLine('Invalid option. Please try again.');
@@ -41,7 +49,9 @@ void main() async {
       console.writeLine('1. Scan for networks');
       console.writeLine('2. Check connection status');
       console.writeLine('3. Disconnect from network');
-      console.writeLine('4. Exit');
+      console.writeLine('4. View saved networks');
+      console.writeLine('5. Forget network');
+      console.writeLine('6. Exit');
       console.writeLine('');
       console.writeLine('Select an option:');
 
@@ -173,4 +183,97 @@ void printToTable(List<WifiNetwork> networks) {
     ..borderType = BorderType.vertical
     ..headerStyle = FontStyle.bold;
   print(table);
+}
+
+/// Displays a list of saved networks
+Future<void> viewSavedNetworks(DbusWifi wifi, Console console) async {
+  console.writeLine('Retrieving saved networks...');
+  final savedNetworks = await wifi.getSavedNetworks();
+
+  if (savedNetworks.isEmpty) {
+    console.writeLine('No saved networks found.');
+    return;
+  }
+
+  console.writeLine('Saved networks:');
+  console.writeLine('');
+
+  var data = <List<String>>[];
+  for (var i = 0; i < savedNetworks.length; i++) {
+    final network = savedNetworks[i];
+    data.add([
+      (i + 1).toString(),
+      network['id'] as String,
+      network['uuid'] as String,
+    ]);
+  }
+
+  final table = Table()
+    ..insertColumn(header: 'ID', alignment: TextAlignment.center)
+    ..insertColumn(header: 'Network Name', alignment: TextAlignment.left)
+    ..insertColumn(header: 'UUID', alignment: TextAlignment.left)
+    ..insertRows(data)
+    ..borderStyle = BorderStyle.square
+    ..borderColor = ConsoleColor.brightBlue
+    ..borderType = BorderType.vertical
+    ..headerStyle = FontStyle.bold;
+
+  print(table);
+}
+
+/// Forgets a saved network
+Future<void> forgetNetwork(DbusWifi wifi, Console console) async {
+  // First, get the list of saved networks
+  final savedNetworks = await wifi.getSavedNetworks();
+
+  if (savedNetworks.isEmpty) {
+    console.writeLine('No saved networks found.');
+    return;
+  }
+
+  // Display the networks
+  await viewSavedNetworks(wifi, console);
+
+  // Ask the user to select a network
+  console.writeLine('Select the ID of the network to forget (or 0 to cancel):');
+  var input = console.readLine();
+  while (input != null && input.isEmpty) {
+    console.writeLine('Please enter a valid ID:');
+    input = console.readLine();
+  }
+
+  var selectedId = int.tryParse(input!);
+  while (selectedId == null || selectedId < 0 || selectedId > savedNetworks.length) {
+    console.writeLine('Invalid selection. Please enter a valid ID:');
+    input = console.readLine();
+    selectedId = int.tryParse(input!);
+  }
+
+  // Return if user cancels
+  if (selectedId == 0) {
+    return;
+  }
+
+  // Get the selected network
+  final selectedNetwork = savedNetworks[selectedId - 1];
+  final networkName = selectedNetwork['id'] as String;
+  final uuid = selectedNetwork['uuid'] as String;
+
+  // Confirm deletion
+  console.writeLine('Are you sure you want to forget "$networkName"? (y/n)');
+  input = console.readLine();
+  if (input == null || input.toLowerCase() != 'y') {
+    console.writeLine('Operation cancelled.');
+    return;
+  }
+
+  // Forget the network
+  console.writeLine('Forgetting network "$networkName"...');
+  final result = await wifi.forgetNetwork(uuid: uuid);
+
+  if (result) {
+    console.writeLine('Network "$networkName" has been forgotten.');
+  } else {
+    console.writeLine('Failed to forget network "$networkName".');
+  }
 }
