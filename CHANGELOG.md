@@ -1,3 +1,11 @@
+## 0.0.5
+
+- Add getSavedNetworks method to list saved Wi-Fi networks
+- Add forgetNetwork method to delete saved Wi-Fi networks
+- Add NetworkManager Settings interface for managing saved connections
+- Enhance CLI with options to view and forget saved networks
+- Update documentation with examples for the new functionality
+
 ## 0.0.4
 
 - Add disconnect method to disconnect from Wi-Fi networks
