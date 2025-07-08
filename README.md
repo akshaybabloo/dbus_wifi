@@ -8,7 +8,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  dbus_wifi: ^0.0.5
+  dbus_wifi: ^0.0.6
 ```
 
 Then run:

@@ -1,3 +1,7 @@
+## 0.0.6
+
+- Update dependencies to latest versions
+
 ## 0.0.5
 
 - Add getSavedNetworks method to list saved Wi-Fi networks
