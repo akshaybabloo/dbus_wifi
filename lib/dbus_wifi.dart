@@ -319,6 +319,21 @@ class DbusWifi {
     }
   }
 
+  /// Returns whether Wi-Fi is currently enabled
+  Future<bool> get isWifiEnabled async {
+    final nm = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager');
+    return await nm.getWirelessEnabled();
+  }
+
+  /// Enables or disables Wi-Fi
+  ///
+  /// Returns the new state of Wi-Fi (true = enabled, false = disabled).
+  Future<bool> setWifiEnabled(bool enabled) async {
+    final nm = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager');
+    await nm.setWirelessEnabled(enabled);
+    return await nm.getWirelessEnabled();
+  }
+
   /// Closes the D-Bus client connection
   Future<void> close() async {
     await _client.close();
