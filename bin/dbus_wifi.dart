@@ -15,14 +15,15 @@ void main() async {
     console.writeLine('3. Disconnect from network');
     console.writeLine('4. View saved networks');
     console.writeLine('5. Forget network');
-    console.writeLine('6. Exit');
+    console.writeLine('6. Toggle Wi-Fi on/off');
+    console.writeLine('7. Exit');
     console.writeLine('');
     console.writeLine('Select an option:');
 
     var input = console.readLine();
     var option = int.tryParse(input ?? '');
 
-    while (option != 6) {
+    while (option != 7) {
       switch (option) {
         case 1:
           await scanAndConnect(wifi, console);
@@ -38,6 +39,9 @@ void main() async {
           break;
         case 5:
           await forgetNetwork(wifi, console);
+          break;
+        case 6:
+          await toggleWifi(wifi, console);
           break;
         default:
           console.writeLine('Invalid option. Please try again.');
@@ -276,4 +280,20 @@ Future<void> forgetNetwork(DbusWifi wifi, Console console) async {
   } else {
     console.writeLine('Failed to forget network "$networkName".');
   }
+}
+
+/// Toggles Wi-Fi on or off
+Future<void> toggleWifi(DbusWifi wifi, Console console) async {
+  final currentState = await wifi.isWifiEnabled;
+  console.writeLine('Wi-Fi is currently ${currentState ? 'enabled' : 'disabled'}.');
+  console.writeLine('${currentState ? 'Disable' : 'Enable'} Wi-Fi? (y/n)');
+
+  final input = console.readLine();
+  if (input == null || input.toLowerCase() != 'y') {
+    console.writeLine('Operation cancelled.');
+    return;
+  }
+
+  final newState = await wifi.setWifiEnabled(!currentState);
+  console.writeLine('Wi-Fi is now ${newState ? 'enabled' : 'disabled'}.');
 }

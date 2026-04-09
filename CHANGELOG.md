@@ -1,3 +1,9 @@
+## 0.0.7
+
+- Add isWifiEnabled getter to check if Wi-Fi is currently enabled
+- Add setWifiEnabled method to toggle Wi-Fi on or off
+- Add toggle Wi-Fi option to CLI
+
 ## 0.0.6
 
 - Update dependencies to latest versions
