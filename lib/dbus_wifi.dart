@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:dbus/dbus.dart';
 import 'package:dbus_wifi/interfaces/nm_settings_remote_object.dart';
 import 'package:dbus_wifi/interfaces/wifi_remote_object.dart';
@@ -17,7 +18,7 @@ enum ConnectionStatus {
   connecting,
 
   /// Connection failed
-  failed
+  failed,
 }
 
 /// A class to interact with Wi-Fi networks using D-Bus
@@ -29,14 +30,25 @@ class DbusWifi {
 
   /// Checks if a Wi-Fi device is available
   Future<bool> get hasWifiDevice async {
-    final nm = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager');
+    final nm = OrgFreedesktopNetworkManager(
+      _client,
+      'org.freedesktop.NetworkManager',
+    );
     final devices = await nm.callGetAllDevices();
 
     for (final devicePath in devices) {
-      final dev = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager', path: devicePath);
+      final dev = OrgFreedesktopNetworkManager(
+        _client,
+        'org.freedesktop.NetworkManager',
+        path: devicePath,
+      );
       final type = await dev.getDeviceType();
       if (type == 2) {
-        _wifiDevice = DBusRemoteObject(_client, name: 'org.freedesktop.NetworkManager', path: devicePath);
+        _wifiDevice = DBusRemoteObject(
+          _client,
+          name: 'org.freedesktop.NetworkManager',
+          path: devicePath,
+        );
         return true;
       }
     }
@@ -48,12 +60,18 @@ class DbusWifi {
   /// Returns a list of [WifiNetwork] objects representing the found networks.
   /// If no Wi-Fi device is found, an exception is thrown.
   /// If unable to read an access point, an exception is thrown.
-  Future<List<WifiNetwork>> search({Duration timeout = const Duration(seconds: 5)}) async {
+  Future<List<WifiNetwork>> search({
+    Duration timeout = const Duration(seconds: 5),
+  }) async {
     if (!await hasWifiDevice) {
       throw Exception('No Wi-Fi device found.');
     }
 
-    final dev = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager', path: _wifiDevice!.path);
+    final dev = OrgFreedesktopNetworkManager(
+      _client,
+      'org.freedesktop.NetworkManager',
+      path: _wifiDevice!.path,
+    );
 
     await dev.callRequestScan({});
     await Future.delayed(timeout);
@@ -62,7 +80,11 @@ class DbusWifi {
     final List<WifiNetwork> results = [];
 
     for (final apPath in accessPoints) {
-      final ap = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager', path: apPath);
+      final ap = OrgFreedesktopNetworkManager(
+        _client,
+        'org.freedesktop.NetworkManager',
+        path: apPath,
+      );
 
       try {
         final ssidBytes = await ap.getSsid();
@@ -72,8 +94,16 @@ class DbusWifi {
         final security = await _determineSecurityType(ap);
         final mode = await _determineWifiMode(dev);
 
-        results
-            .add(WifiNetwork(ssid: ssid, mac: mac, strength: strength, path: apPath, security: security, mode: mode));
+        results.add(
+          WifiNetwork(
+            ssid: ssid,
+            mac: mac,
+            strength: strength,
+            path: apPath,
+            security: security,
+            mode: mode,
+          ),
+        );
       } catch (e) {
         throw Exception('Failed to read access point: $e');
       }
@@ -94,7 +124,10 @@ class DbusWifi {
       throw Exception('No Wi-Fi device found.');
     }
 
-    final manager = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager');
+    final manager = OrgFreedesktopNetworkManager(
+      _client,
+      'org.freedesktop.NetworkManager',
+    );
 
     final connection = {
       'connection': {
@@ -110,21 +143,26 @@ class DbusWifi {
         'key-mgmt': DBusString(network.security),
         'psk': DBusString(password),
       },
-      'ipv4': {
-        'method': DBusString('auto'),
-      },
-      'ipv6': {
-        'method': DBusString('ignore'),
-      },
+      'ipv4': {'method': DBusString('auto')},
+      'ipv6': {'method': DBusString('ignore')},
     };
 
     try {
-      return await manager.callAddAndActivateConnection(connection, _wifiDevice!.path, DBusObjectPath('/'));
+      final (connectionPath, activeConnectionPath) = await manager.callAddAndActivateConnection(
+        connection,
+        _wifiDevice!.path,
+        DBusObjectPath('/'),
+      );
+      return [connectionPath, activeConnectionPath];
     } catch (e) {
       if (e.toString().contains('Auth')) {
-        throw Exception('Authentication failed. Check your password and try again.');
+        throw Exception(
+          'Authentication failed. Check your password and try again.',
+        );
       } else if (e.toString().contains('No network')) {
-        throw Exception('Network unavailable. The selected network may be out of range.');
+        throw Exception(
+          'Network unavailable. The selected network may be out of range.',
+        );
       } else {
         throw Exception('Failed to connect to network: $e');
       }
@@ -142,7 +180,10 @@ class DbusWifi {
 
     try {
       // Set wireless to disabled and then enabled again to disconnect
-      final nm = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager');
+      final nm = OrgFreedesktopNetworkManager(
+        _client,
+        'org.freedesktop.NetworkManager',
+      );
 
       // Disable wireless
       await nm.setWirelessEnabled(false);
@@ -166,14 +207,20 @@ class DbusWifi {
   /// - path: The D-Bus object path
   /// - type: The connection type (usually '802-11-wireless')
   Future<List<Map<String, dynamic>>> getSavedNetworks() async {
-    final settings = OrgFreedesktopNetworkManagerSettings(_client, 'org.freedesktop.NetworkManager');
+    final settings = OrgFreedesktopNetworkManagerSettings(
+      _client,
+      'org.freedesktop.NetworkManager',
+    );
     final connections = await settings.callListConnections();
 
     final List<Map<String, dynamic>> savedNetworks = [];
 
     for (final connectionPath in connections) {
-      final connection =
-          OrgFreedesktopNetworkManagerSettings(_client, 'org.freedesktop.NetworkManager', path: connectionPath);
+      final connection = OrgFreedesktopNetworkManagerSettings(
+        _client,
+        'org.freedesktop.NetworkManager',
+        path: connectionPath,
+      );
 
       try {
         final settings = await connection.callGetSettings();
@@ -211,14 +258,20 @@ class DbusWifi {
       throw Exception('Either uuid or ssid must be provided.');
     }
 
-    final settings = OrgFreedesktopNetworkManagerSettings(_client, 'org.freedesktop.NetworkManager');
+    final settings = OrgFreedesktopNetworkManagerSettings(
+      _client,
+      'org.freedesktop.NetworkManager',
+    );
 
     try {
       if (uuid != null) {
         // Get connection by UUID
         final connectionPath = await settings.callGetConnectionByUuid(uuid);
-        final connection =
-            OrgFreedesktopNetworkManagerSettings(_client, 'org.freedesktop.NetworkManager', path: connectionPath);
+        final connection = OrgFreedesktopNetworkManagerSettings(
+          _client,
+          'org.freedesktop.NetworkManager',
+          path: connectionPath,
+        );
         await connection.callDelete();
         return true;
       } else {
@@ -226,8 +279,11 @@ class DbusWifi {
         final connections = await settings.callListConnections();
 
         for (final connectionPath in connections) {
-          final connection =
-              OrgFreedesktopNetworkManagerSettings(_client, 'org.freedesktop.NetworkManager', path: connectionPath);
+          final connection = OrgFreedesktopNetworkManagerSettings(
+            _client,
+            'org.freedesktop.NetworkManager',
+            path: connectionPath,
+          );
 
           try {
             final settings = await connection.callGetSettings();
@@ -266,21 +322,26 @@ class DbusWifi {
     }
 
     try {
-      final dev = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager', path: _wifiDevice!.path);
+      final dev = OrgFreedesktopNetworkManager(
+        _client,
+        'org.freedesktop.NetworkManager',
+        path: _wifiDevice!.path,
+      );
 
       // Get the active access point
       final activeAccessPoint = await dev.getActiveAccessPoint();
 
       // If there's no active access point or it's the root path, we're disconnected
       if (activeAccessPoint.value == '/') {
-        return {
-          'status': ConnectionStatus.disconnected,
-          'network': null,
-        };
+        return {'status': ConnectionStatus.disconnected, 'network': null};
       }
 
       // Get the access point details
-      final ap = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager', path: activeAccessPoint);
+      final ap = OrgFreedesktopNetworkManager(
+        _client,
+        'org.freedesktop.NetworkManager',
+        path: activeAccessPoint,
+      );
 
       try {
         final ssidBytes = await ap.getSsid();
@@ -299,10 +360,7 @@ class DbusWifi {
           mode: mode,
         );
 
-        return {
-          'status': ConnectionStatus.connected,
-          'network': network,
-        };
+        return {'status': ConnectionStatus.connected, 'network': network};
       } catch (e) {
         return {
           'status': ConnectionStatus.connected,
@@ -321,7 +379,10 @@ class DbusWifi {
 
   /// Returns whether Wi-Fi is currently enabled
   Future<bool> get isWifiEnabled async {
-    final nm = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager');
+    final nm = OrgFreedesktopNetworkManager(
+      _client,
+      'org.freedesktop.NetworkManager',
+    );
     return await nm.getWirelessEnabled();
   }
 
@@ -329,7 +390,10 @@ class DbusWifi {
   ///
   /// Returns the new state of Wi-Fi (true = enabled, false = disabled).
   Future<bool> setWifiEnabled(bool enabled) async {
-    final nm = OrgFreedesktopNetworkManager(_client, 'org.freedesktop.NetworkManager');
+    final nm = OrgFreedesktopNetworkManager(
+      _client,
+      'org.freedesktop.NetworkManager',
+    );
     await nm.setWirelessEnabled(enabled);
     return await nm.getWirelessEnabled();
   }

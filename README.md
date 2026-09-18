@@ -8,7 +8,7 @@ Add this to your package's `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  dbus_wifi: ^0.0.6
+  dbus_wifi: ^0.1.0
 ```
 
 Then run:
@@ -25,6 +25,7 @@ dart pub get
 - Disconnect from networks
 - View saved networks
 - Forget (delete) saved networks
+- Check whether Wi-Fi is enabled and toggle it on or off
 - Command-line interface for interactive usage
 
 ## Usage
@@ -108,6 +109,18 @@ if (forgotten) {
 }
 ```
 
+### Toggling Wi-Fi
+
+```dart
+// Check the current state
+final enabled = await wifi.isWifiEnabled;
+print('Wi-Fi is ${enabled ? 'enabled' : 'disabled'}');
+
+// Turn it off (or on), returns the new state
+final newState = await wifi.setWifiEnabled(!enabled);
+print('Wi-Fi is now ${newState ? 'enabled' : 'disabled'}');
+```
+
 ## Command-Line Interface
 
 The package includes a CLI application that can be used to manage Wi-Fi networks. You can run it with:
@@ -138,6 +151,8 @@ The main class for interacting with Wi-Fi networks.
 - `Future<Map<String, dynamic>> getConnectionStatus()` - Gets the current connection status
 - `Future<List<Map<String, dynamic>>> getSavedNetworks()` - Gets a list of saved Wi-Fi networks
 - `Future<bool> forgetNetwork({String? uuid, String? ssid})` - Forgets (deletes) a saved Wi-Fi network
+- `Future<bool> get isWifiEnabled` - Returns whether Wi-Fi is currently enabled
+- `Future<bool> setWifiEnabled(bool enabled)` - Enables or disables Wi-Fi, returning the new state
 - `Future<void> close()` - Closes the D-Bus client connection
 
 ### WifiNetwork

@@ -55,7 +55,8 @@ void main() async {
       console.writeLine('3. Disconnect from network');
       console.writeLine('4. View saved networks');
       console.writeLine('5. Forget network');
-      console.writeLine('6. Exit');
+      console.writeLine('6. Toggle Wi-Fi on/off');
+      console.writeLine('7. Exit');
       console.writeLine('');
       console.writeLine('Select an option:');
 
@@ -77,7 +78,9 @@ Future<void> scanAndConnect(DbusWifi wifi, Console console) async {
   printToTable(results);
 
   // Select the ID from the table to connect
-  console.writeLine('Select the ID of the network to connect (or 0 to cancel):');
+  console.writeLine(
+    'Select the ID of the network to connect (or 0 to cancel):',
+  );
   var input = console.readLine();
   while (input != null && input.isEmpty) {
     console.writeLine('Please enter a valid ID:');
@@ -285,7 +288,9 @@ Future<void> forgetNetwork(DbusWifi wifi, Console console) async {
 /// Toggles Wi-Fi on or off
 Future<void> toggleWifi(DbusWifi wifi, Console console) async {
   final currentState = await wifi.isWifiEnabled;
-  console.writeLine('Wi-Fi is currently ${currentState ? 'enabled' : 'disabled'}.');
+  console.writeLine(
+    'Wi-Fi is currently ${currentState ? 'enabled' : 'disabled'}.',
+  );
   console.writeLine('${currentState ? 'Disable' : 'Enable'} Wi-Fi? (y/n)');
 
   final input = console.readLine();

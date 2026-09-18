@@ -1,3 +1,8 @@
+
+## 0.1.0
+
+- Update APIs to include DBus 0.8.0
+
 ## 0.0.7
 
 - Add isWifiEnabled getter to check if Wi-Fi is currently enabled
