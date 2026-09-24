@@ -1,8 +1,8 @@
 name: dbus_wifi
 description: |
-  A simple library to connect to Wi-Fi networks using D-Bus on Linux.
+  A simple library to connect to Wi-Fi networks and run Bluetooth LE peripherals using D-Bus (NetworkManager and BlueZ) on Linux.
   This library is intended for use with the dbus package in Dart and Flutter.
-version: 0.1.0
+version: 0.2.0
 repository: https://github.com/akshaybabloo/dbus_wifi
 
 environment:
@@ -21,3 +21,4 @@ dev_dependencies:
 
 executables:
   dbus-wifi: dbus_wifi
+  dbus-bluetooth: dbus_bluetooth
