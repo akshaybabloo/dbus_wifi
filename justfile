@@ -26,4 +26,4 @@ generate:
     dart-dbus generate-object ./interfaces/org.bluez.GattCharacteristic1.xml -o lib/interfaces/bluez_gatt_characteristic_object.dart
     dart-dbus generate-object ./interfaces/org.bluez.LEAdvertisement1.xml -o lib/interfaces/bluez_advertisement_object.dart
     dart-dbus generate-object ./interfaces/org.freedesktop.DBus.ObjectManager.xml -o lib/interfaces/object_manager_object.dart
-    dart format lib/interfaces/bluez_*.dart lib/interfaces/object_manager_object.dart
+    dart format .
