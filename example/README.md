@@ -79,3 +79,11 @@ The CLI application provides a menu-driven interface to:
 - Forget (delete) saved networks
 
 See the [bin/dbus_wifi.dart](https://github.com/akshaybabloo/dbus_wifi/blob/main/bin/dbus_wifi.dart) file for the complete implementation.
+
+## Bluetooth LE Peripheral
+
+[ble_peripheral.dart](https://github.com/akshaybabloo/dbus_wifi/blob/main/example/ble_peripheral.dart) advertises as `dbus-wifi-echo` with one characteristic that echoes every write back as a notification. Run it, then connect with a BLE scanner app such as nRF Connect:
+
+```bash
+dart run example/ble_peripheral.dart
+```

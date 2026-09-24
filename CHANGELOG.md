@@ -1,4 +1,12 @@
 
+## 0.2.0
+
+- Add DbusBluetooth for the BlueZ adapter: power, alias, address, device scanning, connected devices and connection changes
+- Add BlePeripheral to run a GATT server and LE advertisement through BlueZ, with read, write and notify handlers
+- Add BlueZ and ObjectManager interface XML and generated bindings
+- Add dbus-bluetooth CLI to show adapter status, toggle power, set the name, scan for devices, list connected devices and run an echo peripheral
+- Add BLE peripheral example and tests against a fake BlueZ on a private bus
+
 ## 0.1.0
 
 - Update APIs to include DBus 0.8.0
